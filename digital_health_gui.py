@@ -2,6 +2,11 @@ import tkinter as tk
 from tkinter import messagebox
 from user_management import register_user, is_user_registered
 from health_records import add_health_record, get_patient_records, get_all_patients
+from blockchain import Blockchain
+
+
+blockchain = Blockchain()
+blockchain.load_from_file()
 
 def register():
     username = username_entry.get()
@@ -68,15 +73,30 @@ def open_doctor_dashboard():
         selected_patient = patient_var.get()
         view_patient_records(selected_patient)
 
+    # view records
     tk.Button(dashboard, text="View Patient Records", command=view_selected_patient_records).pack()
 
+    # validate blockchain
+    tk.Button(dashboard, text="Validate Blockchain", command=validate_blockchain).pack()
+
 def view_patient_records(patient_name):
+    # Validate blockchain before accessing records
+    if not blockchain.is_chain_valid():
+        messagebox.showerror("Error", "The blockchain has been tampered with! Records cannot be displayed.")
+        return
+
     records = get_patient_records(patient_name)
     if not records:
         messagebox.showinfo("No Records", f"No records found for patient: {patient_name}")
     else:
         formatted_records = "\n\n".join(records)
         messagebox.showinfo(f"{patient_name}'s Records", formatted_records)
+
+def validate_blockchain():
+    if blockchain.is_chain_valid():
+        messagebox.showinfo("Blockchain Validation", "The blockchain is valid. No tampering detected.")
+    else:
+        messagebox.showerror("Blockchain Validation", "The blockchain has been tampered with!")
 
 # GUI Setup
 root = tk.Tk()

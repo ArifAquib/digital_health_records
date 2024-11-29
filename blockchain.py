@@ -21,11 +21,12 @@ class Blockchain:
         return Block(0, datetime.datetime.now(), "Genesis Block", "0")
 
     def add_block(self, data):
+        sanitized_data = data.replace(",", ";")  
         last_block = self.chain[-1]
         new_block = Block(
             index=len(self.chain),
             timestamp=datetime.datetime.now(),
-            data=data,
+            data=sanitized_data,
             previous_hash=last_block.current_hash,
         )
         self.chain.append(new_block)
@@ -50,8 +51,17 @@ class Blockchain:
             with open(filename, "r") as file:
                 self.chain = []
                 for line in file.readlines():
-                    index, timestamp, data, previous_hash, current_hash = line.strip().split(",")
-                    block = Block(int(index), timestamp, data, previous_hash)
+                    parts = line.strip().split(",")
+                    if len(parts) < 5:
+                        raise ValueError(f"Invalid blockchain record: {line.strip()}")
+
+                    index = int(parts[0])
+                    timestamp = parts[1]
+                    data = ",".join(parts[2:-2]) 
+                    previous_hash = parts[-2]
+                    current_hash = parts[-1]
+
+                    block = Block(index, timestamp, data, previous_hash)
                     block.current_hash = current_hash
                     self.chain.append(block)
         except FileNotFoundError:
